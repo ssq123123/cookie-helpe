@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cookie获取助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .step {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        .step.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .step-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .step-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .step-desc {
+            color: #666;
+            text-align: center;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 1px solid #e9ecef;
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: pulse 1.4s ease-in-out infinite both;
+        }
+        
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loading-dot:nth-child(3) { animation-delay: 0s; }
+        
+        @keyframes pulse {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .info-box {
+            background: #e6f3ff;
+            color: #0066cc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0066cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Cookie获取助手</h1>
+            <p>为您的小程序自动获取闲鱼Cookie</p>
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        
+        <!-- 步骤1: 初始化 -->
+        <div class="step active" id="step1">
+            <div class="step-icon">⏳</div>
+            <div class="step-title">正在初始化...</div>
+            <div class="step-desc">请稍等，正在准备获取环境</div>
+            <div class="loading">
+                <span>处理中</span>
+                <div class="loading-dots">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤2: 跳转登录 -->
+        <div class="step" id="step2">
+            <div class="step-icon">🔑</div>
+            <div class="step-title">准备登录闲鱼</div>
+            <div class="step-desc">即将跳转到闲鱼登录页面，请使用您的淘宝账号登录</div>
+            <div class="info-box">
+                💡 登录成功后会自动返回并获取Cookie
+            </div>
+            <button class="btn btn-primary" onclick="jumpToXianyu()">
+                前往闲鱼登录
+            </button>
+            <button class="btn btn-secondary" onclick="manualInput()">
+                改为手动输入
+            </button>
+        </div>
+        
+        <!-- 步骤3: 登录检测 -->
+        <div class="step" id="step3">
+            <div class="step-icon">🔍</div>
+            <div class="step-title">检测登录状态</div>
+            <div class="step-desc">正在检查您的登录状态，请稍等...</div>
+            <div class="loading">
+                <span>检测中</span>
+                <div class="loading-dots">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤4: 获取Cookie -->
+        <div class="step" id="step4">
+            <div class="step-icon">📋</div>
+            <div class="step-title">获取Cookie</div>
+            <div class="step-desc">正在提取Cookie信息...</div>
+            <div class="loading">
+                <span>获取中</span>
+                <div class="loading-dots">
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 步骤5: 完成 -->
+        <div class="step" id="step5">
+            <div class="step-icon">🎉</div>
+            <div class="step-title">获取成功！</div>
+            <div class="step-desc">Cookie已成功获取并发送到您的小程序</div>
+            <div class="success-message">
+                ✅ Cookie配置完成，您可以返回小程序使用完整功能了
+            </div>
+            <button class="btn btn-primary" onclick="returnToMiniapp()">
+                返回小程序
+            </button>
+        </div>
+        
+        <!-- 错误步骤 -->
+        <div class="step" id="stepError">
+            <div class="step-icon">❌</div>
+            <div class="step-title">获取失败</div>
+            <div class="step-desc" id="errorDesc">出现了一些问题，请重试</div>
+            <div class="error-message" id="errorMessage">
+                获取Cookie时发生错误
+            </div>
+            <button class="btn btn-primary" onclick="retry()">
+                重试
+            </button>
+            <button class="btn btn-secondary" onclick="manualInput()">
+                手动输入
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class CookieHelper {
+            constructor() {
+                this.sessionId = this.getQueryParam('sessionId') || 'default';
+                this.currentStep = 1;
+                this.retryCount = 0;
+                this.maxRetries = 3;
+                
+                this.init();
+            }
+            
+            getQueryParam(name) {
+                const params = new URLSearchParams(window.location.search);
+                return params.get(name);
+            }
+            
+            async init() {
+                console.log('初始化Cookie获取助手, sessionId:', this.sessionId);
+                
+                // 模拟初始化延迟
+                await this.sleep(1000);
+                
+                this.updateProgress(25);
+                this.showStep(2);
+            }
+            
+            showStep(stepNumber) {
+                // 隐藏所有步骤
+                document.querySelectorAll('.step').forEach(step => {
+                    step.classList.remove('active');
+                });
+                
+                // 显示指定步骤
+                const targetStep = document.getElementById(`step${stepNumber}`);
+                if (targetStep) {
+                    targetStep.classList.add('active');
+                }
+                
+                this.currentStep = stepNumber;
+            }
+            
+            updateProgress(percentage) {
+                const progressFill = document.getElementById('progressFill');
+                if (progressFill) {
+                    progressFill.style.width = percentage + '%';
+                }
+            }
+            
+            async jumpToXianyu() {
+                this.updateProgress(50);
+                this.showStep(3);
+                
+                // 存储当前页面URL，用于返回
+                sessionStorage.setItem('returnUrl', window.location.href);
+                
+                // 跳转到闲鱼登录页面
+                setTimeout(() => {
+                    window.location.href = 'https://login.taobao.com/member/login.jhtml?redirectURL=https://www.goofish.com';
+                }, 1000);
+            }
+            
+            async checkLoginAndGetCookie() {
+                this.showStep(3);
+                this.updateProgress(60);
+                
+                try {
+                    // 检查当前页面是否为闲鱼页面
+                    if (window.location.hostname.includes('goofish.com')) {
+                        await this.sleep(2000); // 等待页面完全加载
+                        
+                        this.showStep(4);
+                        this.updateProgress(80);
+                        
+                        const cookie = await this.extractCookie();
+                        
+                        if (cookie && this.validateCookie(cookie)) {
+                            await this.sendCookieToMiniapp(cookie);
+                            this.updateProgress(100);
+                            this.showStep(5);
+                        } else {
+                            throw new Error('Cookie获取失败或格式不正确');
+                        }
+                    } else {
+                        // 如果不在闲鱼页面，继续等待
+                        setTimeout(() => this.checkLoginAndGetCookie(), 2000);
+                    }
+                } catch (error) {
+                    this.showError('获取Cookie失败: ' + error.message);
+                }
+            }
+            
+            async extractCookie() {
+                try {
+                    // 方法1: 直接获取document.cookie
+                    let cookie = document.cookie;
+                    
+                    if (cookie && cookie.includes('_m_h5_tk')) {
+                        return cookie;
+                    }
+                    
+                    // 方法2: 发送测试请求触发Cookie设置
+                    await fetch('https://www.goofish.com/api/user/info', {
+                        credentials: 'include'
+                    }).catch(() => {});
+                    
+                    cookie = document.cookie;
+                    
+                    if (cookie && cookie.includes('_m_h5_tk')) {
+                        return cookie;
+                    }
+                    
+                    // 方法3: 从localStorage/sessionStorage获取
+                    const storedCookie = localStorage.getItem('cookie') || 
+                                       sessionStorage.getItem('cookie');
+                    
+                    if (storedCookie) {
+                        return storedCookie;
+                    }
+                    
+                    throw new Error('无法获取有效的Cookie');
+                    
+                } catch (error) {
+                    console.error('提取Cookie失败:', error);
+                    throw error;
+                }
+            }
+            
+            validateCookie(cookie) {
+                if (!cookie || typeof cookie !== 'string') {
+                    return false;
+                }
+                
+                // 检查关键字段
+                const requiredFields = ['_m_h5_tk', 'cookie2'];
+                return requiredFields.some(field => cookie.includes(field));
+            }
+            
+            async sendCookieToMiniapp(cookie) {
+                try {
+                    // 方法1: 使用微信小程序JSBridge
+                    if (window.wx && window.wx.miniProgram) {
+                        window.wx.miniProgram.postMessage({
+                            data: {
+                                type: 'cookie_acquired',
+                                cookie: cookie,
+                                sessionId: this.sessionId
+                            }
+                        });
+                    }
+                    
+                    // 方法2: 存储到本地，供小程序读取
+                    const tempKey = `temp_cookie_${this.sessionId}`;
+                    localStorage.setItem(tempKey, cookie);
+                    
+                    // 方法3: 通过URL参数传递（如果Cookie不太长）
+                    if (cookie.length < 1000) {
+                        const returnUrl = sessionStorage.getItem('returnUrl');
+                        if (returnUrl) {
+                            const url = new URL(returnUrl);
+                            url.searchParams.set('cookie', encodeURIComponent(cookie));
+                            // 可以跳转回带Cookie参数的URL
+                        }
+                    }
+                    
+                    console.log('Cookie已发送到小程序');
+                    
+                } catch (error) {
+                    console.error('发送Cookie到小程序失败:', error);
+                    throw error;
+                }
+            }
+            
+            showError(message) {
+                const errorDesc = document.getElementById('errorDesc');
+                const errorMessage = document.getElementById('errorMessage');
+                
+                if (errorDesc) errorDesc.textContent = message;
+                if (errorMessage) errorMessage.textContent = message;
+                
+                this.showStep('Error');
+            }
+            
+            retry() {
+                if (this.retryCount < this.maxRetries) {
+                    this.retryCount++;
+                    this.init();
+                } else {
+                    this.showError('重试次数过多，请使用手动输入方式');
+                }
+            }
+            
+            manualInput() {
+                // 跳转回小程序或显示手动输入说明
+                alert('请返回小程序，选择"手动输入Cookie"选项');
+                this.returnToMiniapp();
+            }
+            
+            returnToMiniapp() {
+                // 关闭web-view，返回小程序
+                if (window.wx && window.wx.miniProgram) {
+                    window.wx.miniProgram.navigateBack();
+                } else {
+                    window.close();
+                }
+            }
+            
+            sleep(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+        }
+        
+        // 全局函数，供HTML调用
+        let cookieHelper;
+        
+        window.onload = function() {
+            cookieHelper = new CookieHelper();
+            
+            // 如果当前页面是闲鱼页面，直接开始检测
+            if (window.location.hostname.includes('goofish.com')) {
+                cookieHelper.checkLoginAndGetCookie();
+            }
+        };
+        
+        function jumpToXianyu() {
+            cookieHelper.jumpToXianyu();
+        }
+        
+        function retry() {
+            cookieHelper.retry();
+        }
+        
+        function manualInput() {
+            cookieHelper.manualInput();
+        }
+        
+        function returnToMiniapp() {
+            cookieHelper.returnToMiniapp();
+        }
+        
+        // 监听页面可见性变化，用于检测从其他页面返回
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && cookieHelper && cookieHelper.currentStep < 5) {
+                // 页面重新可见，可能是从登录页面返回
+                setTimeout(() => {
+                    cookieHelper.checkLoginAndGetCookie();
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>
